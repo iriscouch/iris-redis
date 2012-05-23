@@ -23,9 +23,13 @@ Object.keys(redis).forEach(function(key) {
   module.exports[key] = redis[key]
 })
 
-module.exports.createClient = function(port, host, options) {
+module.exports.createClient = createClient
+
+function createClient(port, host, options) {
   var client = redis.createClient(port, host, options)
 
+  client._iris_redis = true
+  client._options = options
   client._auth = client.auth
   client._same_tick = true
   process.nextTick(function() { client._same_tick = false })
@@ -46,6 +50,7 @@ module.exports.createClient = function(port, host, options) {
 
   client.auth = auth_wrapper
   client.iris_config = iris_config
+  client.iris_upgrade = iris_upgrade
 
   if(options && options.auth)
     client.auth(options.auth)
@@ -95,7 +100,7 @@ function iris_config(callback) {
   var self = this
 
   if(typeof callback != 'function')
-    throw new Error('iris_config requires a callback: function(error, config_obj)')
+    throw new Error('Required callback: function(error, config_obj)')
 
   self.smembers('_config', function(er, res) {
     if(er)
@@ -117,5 +122,44 @@ function iris_config(callback) {
         return get_config_key()
       })
     }
+  })
+}
+
+
+function iris_upgrade(callback) {
+  var self = this
+
+  if(typeof callback != 'function')
+    throw new Error('Required callback: function(error, new_client)')
+
+  // Only call the callback once ever.
+  var real_callback = callback
+  callback = function() {
+    real_callback.apply(this, arguments)
+    real_callback = function() {}
+  }
+
+  return self.iris_config(function(er, config) {
+    if(er)
+      return callback(er)
+
+    var new_port = +config['_config:port']
+      , new_ip   = config['_config:ip']
+
+    // Just build a normal redis client, not a wrapped one; but give it the iris_config and iris_upgrade
+    // methods so people can just run an upgrade whenever they want.
+    var new_client = redis.createClient(new_port, new_ip, self._options)
+    new_client.auth(self.auth_pass)
+
+    new_client.on('ready', function() {
+      console.log('Client ready!')
+      self.quit()
+
+      new_client.iris_config = iris_config
+      new_client.iris_upgrade = iris_upgrade
+      callback(null, new_client)
+    })
+
+    new_client.on('error', function(er) { callback(er) })
   })
 }

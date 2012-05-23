@@ -130,3 +130,23 @@ test('Iris config', function(t) {
     t.end()
   })
 })
+
+test('Connection upgrades', function(t) {
+  var client = require('../api').createClient(PORT, HOST, {'auth':PASSWORD})
+
+  t.type(client.iris_upgrade, 'function', 'Client has Iris Redis upgrade method')
+
+  client.iris_upgrade(function(er, new_client) {
+    if(er) throw er
+
+    // For now, the upgrade does not return an iris-redis wrapped client, but the Real Deal.
+    t.notOk(new_client._iris_redis, 'Upgraded client is not iris-redis')
+
+    // However it does add a couple of helpful methods to the object.
+    t.type(new_client.iris_config, 'function', 'Upgrade client has .iris_config')
+    t.type(new_client.iris_upgrade, 'function', 'Upgrade client has .iris_upgrade')
+
+    new_client.end()
+    t.end()
+  })
+})
