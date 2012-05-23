@@ -1,0 +1,16 @@
+{ "name": "iris-redis"
+, "version": "0.1.0"
+, "description": "Thin node_redis wrapper to connect to Iris Couch's Redis service"
+
+, "author": { "name": "Jason Smith", "email": "jhs@iriscouch.com" }
+, "keywords": ["redis", "iriscouch"]
+, "homepage": "http://github.com/iriscouch/iris-redis"
+, "repository": { "type": "git" , "url": "git://github.com/iriscouch/iris-redis" }
+, "engines": [ "node" ]
+, "dependencies" : { "redis" : "~0.7.2"
+                   }
+, "devDependencies": { "tap": "~0.2.5"
+                     }
+
+, "main": "./api.js"
+}
