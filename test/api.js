@@ -114,3 +114,19 @@ test('Auto authentication', function(t) {
     t.end()
   }
 })
+
+test('Iris config', function(t) {
+  var client = require('../api').createClient(PORT, HOST, {'auth':PASSWORD})
+
+  t.type(client.iris_config, 'function', 'Client has .iris_config method')
+
+  client.iris_config(function(er, config) {
+    if(er) throw er
+    t.ok(config['_config:datacenter'], 'Data center is indicated in the config')
+    t.ok(config['_config:ip'], 'Server internal IP in the config')
+    t.ok(config['_config:port'], 'Server internal port in the config')
+
+    client.end()
+    t.end()
+  })
+})

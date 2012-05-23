@@ -45,6 +45,7 @@ module.exports.createClient = function(port, host, options) {
   })
 
   client.auth = auth_wrapper
+  client.iris_config = iris_config
 
   if(options && options.auth)
     client.auth(options.auth)
@@ -73,14 +74,48 @@ function bad_info() {
 function auth_wrapper(pass, callback) {
   var self = this
 
+  callback = callback || function() {}
+
+  // With auth called, the faux commands can be removed, allowing normal commands to queue up.
+  commands.forEach(function(command) {
+    if(self.hasOwnProperty(command) && typeof self[command] == 'function')
+      delete self[command]
+  })
+
   pass = this.host + ":" + pass
   return self._auth(pass, function(er, res) {
-    if(!er)
-      commands.forEach(function(command) {
-        if(self.hasOwnProperty(command) && typeof self[command] == 'function')
-          delete self[command]
-      })
+    if(er)
+      return callback(er)
+    callback(er, res)
+  })
+}
 
-    return callback && callback(er, res)
+
+function iris_config(callback) {
+  var self = this
+
+  if(typeof callback != 'function')
+    throw new Error('iris_config requires a callback: function(error, config_obj)')
+
+  self.smembers('_config', function(er, res) {
+    if(er)
+      return callback(er)
+
+    var config = {}
+
+    // This is synchronous becuase it's just a few keys, and it simplifies the code.
+    get_config_key()
+    function get_config_key() {
+      var key = res.pop()
+      if(!key)
+        return callback(null, config)
+
+      self.get(key, function(er, res) {
+        if(er)
+          return callback(er)
+        config[key] = res
+        return get_config_key()
+      })
+    }
   })
 }
