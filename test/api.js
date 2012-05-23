@@ -92,3 +92,25 @@ test('Client authentication', function(t) {
     t.end()
   }
 })
+
+test('Auto authentication', function(t) {
+  var client = require('../api').createClient(PORT, HOST, {'auth':PASSWORD})
+
+  var pong = false
+    , timer = setTimeout(check_pong, 3000)
+
+  client.on('ready', function() {
+    client.ping(function(er, res) {
+      clearTimeout(timer)
+      if(er) throw er
+      pong = res
+      check_pong()
+    })
+  })
+
+  function check_pong() {
+    t.equal(pong, "PONG", 'Valid authentication and ping to server')
+    client.end()
+    t.end()
+  }
+})
