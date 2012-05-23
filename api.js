@@ -30,6 +30,10 @@ module.exports.createClient = function() {
   client._same_tick = true
   process.nextTick(function() { client._same_tick = false })
 
+  // Create an error object right now, so that the callback is more useful down the road.
+  client._bad_command_er = new Error('Mandatory .auth() before any command')
+  client._bad_info_er = new Error('You must run .auth() immediately after .createClient()')
+
   commands.forEach(function(command) {
     if(client.hasOwnProperty(command))
       throw new Error('Substututing non-prototype command not supported: ' + command)
@@ -45,22 +49,20 @@ module.exports.createClient = function() {
 }
 
 function bad_command(name) {
-  var er = new Error('Mandatory .auth() before command: ' + name)
   return function() {
     if(this._same_tick)
-      throw er
+      throw new Error(this._bad_command_er.message)
     else
-      this.emit('error', er)
+      this.emit('error', this._bad_command_er)
   }
 }
 
 // Provide a more useful error message since info() is called implicitly for users.
 function bad_info() {
-  var er = new Error('You must run .auth() immediately after .createClient()')
   if(this._same_tick)
-    throw er
+    throw new Error(this._bad_info_er.message)
   else
-    this.emit('error', er)
+    this.emit('error', this._bad_info_er)
 }
 
 
