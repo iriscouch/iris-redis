@@ -18,8 +18,8 @@ var tap = require('tap')
 var test = tap.test
 var util = require('util')
 
-var HOST = process.env.redis_host || 'redis.example.iriscouch.com'
-  , LOCALHOST = '127.0.0.1'
+var PORT = 6379
+  , HOST = process.env.redis_host || 'redis.example.iriscouch.com'
 
 test('node_redis API compatibility', function(t) {
   var redis
@@ -28,11 +28,37 @@ test('node_redis API compatibility', function(t) {
   t.type(redis, 'object', 'require("iris-redis") looks like a module')
   t.type(redis.createClient, 'function', 'createClient() function is exported')
 
-  var client = redis.createClient(6379, LOCALHOST)
+  var client = redis.createClient(PORT, HOST)
   client.on('error', function(er) { console.error('Error: ' + er) })
 
   t.type(client, 'object', 'createClient() returns a client object')
   t.type(client.auth, 'function', 'client.auth() method looks good')
+
+  client.end()
+  t.end()
+})
+
+test('Client requires auth before doing anything else', function(t) {
+  var redis = require('../api')
+  var client = redis.createClient(PORT, HOST)
+
+  var bad_callback = function() { throw new Error('Callback should never run') }
+  var bad_commands = {'get':['key','val'], 'hset':['hashkey','key','val'], 'quit':[]}
+
+  Object.keys(bad_commands).forEach(function(command) {
+    var args = bad_commands[command]
+
+    var error = null
+    try {
+      client[command].apply(client, args, bad_callback)
+    } catch (er) {
+      if(!er.message.match(/\.auth\(\)/))
+        throw er
+      error = er
+    }
+
+    t.ok(error, 'Unauthenticated command throws an error: ' + command)
+  })
 
   client.end()
   t.end()
