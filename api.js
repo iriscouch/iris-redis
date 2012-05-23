@@ -26,6 +26,7 @@ Object.keys(redis).forEach(function(key) {
 module.exports.createClient = function() {
   var client = redis.createClient.apply(this, arguments)
 
+  client._auth = client.auth
   client._same_tick = true
   process.nextTick(function() { client._same_tick = false })
 
@@ -39,6 +40,7 @@ module.exports.createClient = function() {
       client[command] = bad_command(command)
   })
 
+  client.auth = auth_wrapper
   return client
 }
 
@@ -59,4 +61,20 @@ function bad_info() {
     throw er
   else
     this.emit('error', er)
+}
+
+
+function auth_wrapper(pass, callback) {
+  var self = this
+
+  pass = this.host + ":" + pass
+  return self._auth(pass, function(er, res) {
+    if(!er)
+      commands.forEach(function(command) {
+        if(self.hasOwnProperty(command) && typeof self[command] == 'function')
+          delete self[command]
+      })
+
+    return callback(er, res)
+  })
 }

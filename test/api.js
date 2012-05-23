@@ -63,3 +63,31 @@ test('Client requires auth before doing anything else', function(t) {
   client.end()
   t.end()
 })
+
+test('Client authentication', function(t) {
+  var redis = require('../api')
+  var client = redis.createClient(PORT, HOST)
+
+  var auth_result = {'er':null, 'res':null}
+
+  var auth_timer = setTimeout(timed_out, 3000)
+  function timed_out() {
+    auth_result.er = 'timeout'
+    check_auth()
+  }
+
+  client.auth('s3cret', function(er, res) {
+    clearTimeout(auth_timer)
+    auth_result.er = er
+    auth_result.res = res
+    check_auth()
+  })
+
+  function check_auth() {
+    t.same(auth_result.er, null, 'No error authenticating')
+    t.equal(auth_result.res, 'OK', 'Affirmative authentication response from Redis')
+
+    client.end()
+    t.end()
+  }
+})
