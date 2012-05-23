@@ -2,6 +2,10 @@
 
 `iris-redis` is a very simple wrapper, 100% compatible with the [Node.js redis package][node_redis]. It simplifies connecting, and helps to see metadata about your server.
 
+iris-redis is in the npm registry:
+
+    npm install iris-redis
+
 ## Example
 
 ```javascript
