@@ -20,6 +20,7 @@ var util = require('util')
 
 var PORT = 6379
   , HOST = process.env.redis_host || 'redis.example.iriscouch.com'
+  , PASSWORD = 's3cret'
 
 test('node_redis API compatibility', function(t) {
   var redis
@@ -76,7 +77,7 @@ test('Client authentication', function(t) {
     check_auth()
   }
 
-  client.auth('s3cret', function(er, res) {
+  client.auth(PASSWORD, function(er, res) {
     clearTimeout(auth_timer)
     auth_result.er = er
     auth_result.res = res
