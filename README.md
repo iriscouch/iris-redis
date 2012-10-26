@@ -37,7 +37,7 @@ Got my server config:
 
 ## Easy AUTH command
 
-Iris Couch requires an `AUTH` command in the format `redis.your_hostname.iriscouch.com:your_password`. To save you some trouble, the iris-redis package prepends the hostname in its `.auth()` wrapper.
+Iris Couch requires an `AUTH` command in the format `your_hostname.redis.irstack.com:your_password`. To save you some trouble, the iris-redis package prepends the hostname in its `.auth()` wrapper.
 
 In other words, if you run this: `client.auth("s3cret")`
 
