@@ -40,7 +40,7 @@ function createClient(port, host, options) {
 
   commands.forEach(function(command) {
     if(client.hasOwnProperty(command))
-      throw new Error('Substututing non-prototype command not supported: ' + command)
+      throw new Error('Substituting non-prototype command not supported: ' + command)
 
     if(command == 'info')
       client[command] = bad_info
